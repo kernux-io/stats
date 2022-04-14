@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import pandas as pd
+import plot
 
 
 def read_files(path):
@@ -25,8 +26,8 @@ def read_files(path):
     return pd.DataFrame.from_dict(data)
 
 
-def write_df(df, directory, filename):
-    df.to_csv(f"{directory}/{filename}", header=False)
+def write_df(df, directory, filename, header=False):
+    df.to_csv(f"{directory}/{filename}", header=header)
 
 
 def main(args):
@@ -39,9 +40,17 @@ def main(args):
     
     median = df.median()
     print(f"\nMedian:\n{median}")
+
+    std = df.std()
+    print(f"\nStandard deviation:\n{std}")
     
+    write_df(df, directory, "df.csv", True)
     write_df(mean, directory, "mean.csv")
     write_df(median, directory, "median.csv")
+    write_df(std, directory, "std.csv")
+
+    df = df["OVERALL, RunTime(ms)"] # TODO
+    plot.plot(df) 
 
 
 if __name__ == '__main__':
