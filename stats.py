@@ -30,11 +30,10 @@ def write_df(df, directory, filename, header=False):
     df.to_csv(f"{directory}/{filename}", header=header)
 
 
-def main(args):
-    directory = args.directory
+def calculate_stats(directory):
     df = read_files(directory)
     print(f"\nDataFrame:\n{df}")
-    
+
     mean = df.mean()
     print(f"\nMean (average):\n{mean}")
     
@@ -43,18 +42,30 @@ def main(args):
 
     std = df.std()
     print(f"\nStandard deviation:\n{std}")
-    
+
     write_df(df, directory, "df.csv", True)
     write_df(mean, directory, "mean.csv")
     write_df(median, directory, "median.csv")
     write_df(std, directory, "std.csv")
 
-    df = df["OVERALL, RunTime(ms)"] # TODO
-    plot.plot(df) 
+
+def main(directory):
+    df_unikernel = None
+    df_docker = None
+
+    path_unikernel = f"{directory}/unikernel"
+    if os.path.isdir(path_unikernel):
+        df_unikernel = calculate_stats(path_unikernel)
+
+    path_docker = f"{directory}/docker"
+    if os.path.isdir(path_docker):
+        df_docker = calculate_stats(path_docker)
+
+    plot.main(df_unikernel=df_unikernel, df_docker=df_docker, directory=directory)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="calculate some statistics on the benchmark results")
     parser.add_argument('-d', '--directory', required=True, help="specify the input directory")
     args = parser.parse_args()
-    main(args)
+    main(directory=args.directory)
