@@ -1,5 +1,4 @@
 import argparse
-import numpy as np
 import os
 import pandas as pd
 import seaborn as sns
@@ -24,13 +23,14 @@ def plot(df, filename, figsize=(5,5), x="observation", y="value", hue="source", 
     fig.savefig(filename)
 
 
-def main(df_unikernel=None, df_docker=None, directory=None, labels=[]):
+def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel", dir_df2 = "docker", errors_df1=[], errors_df2=[]):
     if directory is not None and df_unikernel is None:
-        df_unikernel = read_df(f"{directory}/unikernel")
-        df_unikernel["source"] = "unikernel"
+        df_unikernel = read_df(f"{directory}/{dir_df1}")
     if directory is not None and df_docker is None:
-        df_docker = read_df(f"{directory}/docker")
-        df_docker["source"] = "docker"
+        df_docker = read_df(f"{directory}/{dir_df2}")
+
+    df_unikernel["source"] = dir_df1
+    df_docker["source"] = dir_df2
     df_union = pd.concat([df_unikernel, df_docker], ignore_index=True)    
     
     df = df_union.copy()
@@ -48,11 +48,14 @@ def main(df_unikernel=None, df_docker=None, directory=None, labels=[]):
 
     print(df.to_string())
 
+    print(f"\nUnikernel errors: {len(errors_df1)} ({errors_df1}) \
+            \nDocker errors: {len(errors_df2)} ({errors_df2})")
+
     # Overall runtime (ms)
     df_plot = df.loc[df["observation"] == "OVERALL, RunTime(ms)"]
     plot(
         df_plot,
-        f"{directory}/overall_runtime.svg",
+        f"{directory}/overall-runtime_{dir_df1}-{dir_df2}.svg",
         x_label="",
         y_label="ms",
         title="Overall runtime",
@@ -63,7 +66,7 @@ def main(df_unikernel=None, df_docker=None, directory=None, labels=[]):
     df_plot = df.loc[df["observation"] == "OVERALL, Throughput(ops/sec)"]
     plot(
         df_plot,
-        f"{directory}/overall_throughput.svg",
+        f"{directory}/overall-throughput_{dir_df1}-{dir_df2}.svg",
         x_label="",
         y_label="sec",
         title="Overall throughput",
@@ -80,7 +83,7 @@ def main(df_unikernel=None, df_docker=None, directory=None, labels=[]):
     ]
     plot(
         df_plot,
-        f"{directory}/read_ops.svg",
+        f"{directory}/ops-read_{dir_df1}-{dir_df2}.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
@@ -104,7 +107,7 @@ def main(df_unikernel=None, df_docker=None, directory=None, labels=[]):
     ]
     plot(
         df_plot,
-        f"{directory}/cleanup_ops.svg",
+        f"{directory}/ops-cleanup_{dir_df1}-{dir_df2}.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
@@ -128,7 +131,7 @@ def main(df_unikernel=None, df_docker=None, directory=None, labels=[]):
     ]
     plot(
         df_plot,
-        f"{directory}/insert_ops.svg",
+        f"{directory}/ops-insert_{dir_df1}-{dir_df2}.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
