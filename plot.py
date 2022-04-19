@@ -5,29 +5,35 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 
-def read_df(directory):
-    path_df = f"{directory}/df.csv"
-    if os.path.isfile(path_df):
+def read_df(directory, filename):
+    path_df = f"{directory}/{filename}"
+    if os.path.isfile(path_df) and os.stat(path_df).st_size > 0:
         return pd.read_csv(path_df)
 
 
-def plot(df, filename, figsize=(5,5), x="observation", y="value", hue="source", x_label="", y_label="", title="", labels=[]):
+def plot(df, filename, figsize=(5,5), x="observation", y="value", hue="source", x_label="", y_label="", title="", labels=[], rotation=0):
     plt.figure(figsize=figsize)
     ax = sns.barplot(x=x, y=y, data=df, ci="sd", capsize=0.05, hue=hue)
-    ax.set_xlabel(x_label, fontsize = 10)
-    ax.set_ylabel(y_label, fontsize = 10)
+    ax.set_xlabel(x_label, fontsize = 8)
+    ax.set_ylabel(y_label, fontsize = 8)
     ax.set_title(title, fontsize = 15)
-    ax.set_xticklabels(labels, rotation=0)
+    if labels != []:
+        ax.set_xticklabels(labels, rotation=rotation)
     plt.show()
     fig = ax.get_figure()
     fig.savefig(filename)
 
 
-def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel", dir_df2 = "docker", errors_df1=[], errors_df2=[]):
-    if directory is not None and df_unikernel is None:
-        df_unikernel = read_df(f"{directory}/{dir_df1}")
-    if directory is not None and df_docker is None:
-        df_docker = read_df(f"{directory}/{dir_df2}")
+def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel", dir_df2 = "docker", errors_df1=None, errors_df2=None):
+    if directory is not None:
+        if df_unikernel is None:
+            df_unikernel = read_df(f"{directory}/{dir_df1}", "df.csv")
+        if df_docker is None:
+            df_docker = read_df(f"{directory}/{dir_df2}", "df.csv")
+        if errors_df1 is None:
+            errors_df1 = read_df(f"{directory}/{dir_df1}", "errors.csv")
+        if errors_df2 is None:
+            errors_df2 = read_df(f"{directory}/{dir_df2}", "errors.csv")
 
     df_unikernel["source"] = dir_df1
     df_docker["source"] = dir_df2
@@ -46,10 +52,9 @@ def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel
             df_observation = df_observation[["source", "observation", "value"]]
             df = pd.concat([df, df_observation], ignore_index=True)
 
-    print(df.to_string())
-
-    print(f"\nUnikernel errors: {len(errors_df1)} ({errors_df1}) \
-            \nDocker errors: {len(errors_df2)} ({errors_df2})")
+    print(f"\nUnikernel errors: {(errors_df1['count'] > 0).value_counts()}\n{errors_df1.loc[errors_df1['count'] > 0]}")
+    print(f"\nDocker errors: {(errors_df2['count'] > 0).value_counts()}\n{errors_df2.loc[errors_df2['count'] > 0]}")
+    print(errors_df1.index)
 
     # Overall runtime (ms)
     df_plot = df.loc[df["observation"] == "OVERALL, RunTime(ms)"]
@@ -143,6 +148,54 @@ def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel
             "95th percentile latency",
             "99th percentile latency"
         ]
+    )
+
+    # Errors in 1st dataframe
+    if errors_df1['instance_id'].count() > 0:
+        plot(
+            errors_df1,
+            f"{directory}/errors_{dir_df1}.svg",
+            figsize=(12,5),
+            x="instance_id",
+            y="count",
+            hue=None,
+            x_label="errors",
+            y_label="count",
+            title="Number of errors",
+        )
+
+    # Errors in 2nd dataframe
+    if errors_df2['instance_id'].count() > 0:
+        plot(
+            errors_df2,
+            f"{directory}/errors_{dir_df2}.svg",
+            figsize=(12,5),
+            x="instance_id",
+            y="count",
+            hue=None,
+            x_label="errors",
+            y_label="count",
+            title="Number of errors",
+        )
+
+    plot(
+        df_unikernel,
+        f"{directory}/instances_overall-runtime_{dir_df1}.svg",
+        x="instance",
+        y="OVERALL, RunTime(ms)",
+        x_label="instances",
+        y_label="ms",
+        title="Overall runtime",
+    )
+
+    plot(
+        df_docker,
+        f"{directory}/instances_overall-runtime_{dir_df2}.svg",
+        x="instance",
+        y="OVERALL, RunTime(ms)",
+        x_label="instances",
+        y_label="ms",
+        title="Overall runtime",
     )
 
 if __name__ == '__main__':
