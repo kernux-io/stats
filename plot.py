@@ -24,20 +24,34 @@ def plot(df, filename, figsize=(5,5), x="observation", y="value", hue="source", 
     fig.savefig(filename)
 
 
-def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel", dir_df2 = "docker", errors_df1=None, errors_df2=None):
+def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
     if directory is not None:
-        if df_unikernel is None:
-            df_unikernel = read_df(f"{directory}/{dir_df1}", "df.csv")
-        if df_docker is None:
-            df_docker = read_df(f"{directory}/{dir_df2}", "df.csv")
-        if errors_df1 is None:
-            errors_df1 = read_df(f"{directory}/{dir_df1}", "errors.csv")
-        if errors_df2 is None:
-            errors_df2 = read_df(f"{directory}/{dir_df2}", "errors.csv")
+        sub_dirs = [
+            "unikernel_allocpool", 
+            "unikernel_base",
+            "unikernel_dce",
+            "unikernel_dce-allocpool",
+            "unikernel_falloc",
+            "unikernel_fbuddyalloc",
+        ]
 
-    df_unikernel["source"] = dir_df1
-    df_docker["source"] = dir_df2
-    df_union = pd.concat([df_unikernel, df_docker], ignore_index=True)    
+        dfs = {}
+        error_dfs = {}
+        for sub_dir in sub_dirs:
+            path = f"{directory}/{sub_dir}"
+            df = read_df(path, "df.csv")
+            error_df = read_df(path, "errors.csv")
+            if df is not None:
+                df["source"] = sub_dir
+                dfs[sub_dir] = df
+            if error_df is not None:
+                error_dfs[sub_dir] = error_df
+
+    dfs_list = []
+    for key in dfs.keys():
+        dfs_list.append(dfs[key])
+
+    df_union = pd.concat(dfs_list, ignore_index=True)    
     
     df = df_union.copy()
     df["observation"] = "OVERALL, RunTime(ms)"
@@ -52,15 +66,16 @@ def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel
             df_observation = df_observation[["source", "observation", "value"]]
             df = pd.concat([df, df_observation], ignore_index=True)
 
-    print(f"\nUnikernel errors: {(errors_df1['count'] > 0).value_counts()}\n{errors_df1.loc[errors_df1['count'] > 0]}")
-    print(f"\nDocker errors: {(errors_df2['count'] > 0).value_counts()}\n{errors_df2.loc[errors_df2['count'] > 0]}")
-    print(errors_df1.index)
+    #print(f"\nUnikernel errors: {(errors_df1['count'] > 0).value_counts()}\n{errors_df1.loc[errors_df1['count'] > 0]}")
+    #print(f"\nDocker errors: {(errors_df2['count'] > 0).value_counts()}\n{errors_df2.loc[errors_df2['count'] > 0]}")
+    #print(errors_df1.index)
 
     # Overall runtime (ms)
     df_plot = df.loc[df["observation"] == "OVERALL, RunTime(ms)"]
     plot(
         df_plot,
-        f"{directory}/overall-runtime_{dir_df1}-{dir_df2}.svg",
+        #f"{directory}/overall-runtime_{dir_df1}-{dir_df2}.svg",
+        f"{directory}/overall-runtime.svg",
         x_label="",
         y_label="ms",
         title="Overall runtime",
@@ -71,7 +86,8 @@ def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel
     df_plot = df.loc[df["observation"] == "OVERALL, Throughput(ops/sec)"]
     plot(
         df_plot,
-        f"{directory}/overall-throughput_{dir_df1}-{dir_df2}.svg",
+        #f"{directory}/overall-throughput_{dir_df1}-{dir_df2}.svg",
+        f"{directory}/overall-throughput.svg",
         x_label="",
         y_label="sec",
         title="Overall throughput",
@@ -88,7 +104,8 @@ def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel
     ]
     plot(
         df_plot,
-        f"{directory}/ops-read_{dir_df1}-{dir_df2}.svg",
+        #f"{directory}/ops-read_{dir_df1}-{dir_df2}.svg",
+        f"{directory}/ops-read.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
@@ -112,7 +129,8 @@ def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel
     ]
     plot(
         df_plot,
-        f"{directory}/ops-cleanup_{dir_df1}-{dir_df2}.svg",
+        #f"{directory}/ops-cleanup_{dir_df1}-{dir_df2}.svg",
+        f"{directory}/ops-cleanup.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
@@ -136,7 +154,8 @@ def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel
     ]
     plot(
         df_plot,
-        f"{directory}/ops-insert_{dir_df1}-{dir_df2}.svg",
+        #f"{directory}/ops-insert_{dir_df1}-{dir_df2}.svg",
+        f"{directory}/ops-insert.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
@@ -150,53 +169,30 @@ def main(df_unikernel=None, df_docker=None, directory=None, dir_df1 = "unikernel
         ]
     )
 
-    # Errors in 1st dataframe
-    if errors_df1['instance_id'].count() > 0:
+    for key in error_dfs:
+        if error_dfs[key]['instance_id'].count() > 0:
+            plot(
+                error_dfs[key],
+                f"{directory}/errors_{key}.svg",
+                figsize=(12,5),
+                x="instance_id",
+                y="count",
+                hue=None,
+                x_label="errors",
+                y_label="count",
+                title=f"Number of errors in {key}",
+            )
+
+    for key in dfs:
         plot(
-            errors_df1,
-            f"{directory}/errors_{dir_df1}.svg",
-            figsize=(12,5),
-            x="instance_id",
-            y="count",
-            hue=None,
-            x_label="errors",
-            y_label="count",
-            title="Number of errors",
+            dfs[key],
+            f"{directory}/instances_overall-runtime_{key}.svg",
+            x="instance",
+            y="OVERALL, RunTime(ms)",
+            x_label="instances",
+            y_label="ms",
+            title="Overall runtime",
         )
-
-    # Errors in 2nd dataframe
-    if errors_df2['instance_id'].count() > 0:
-        plot(
-            errors_df2,
-            f"{directory}/errors_{dir_df2}.svg",
-            figsize=(12,5),
-            x="instance_id",
-            y="count",
-            hue=None,
-            x_label="errors",
-            y_label="count",
-            title="Number of errors",
-        )
-
-    plot(
-        df_unikernel,
-        f"{directory}/instances_overall-runtime_{dir_df1}.svg",
-        x="instance",
-        y="OVERALL, RunTime(ms)",
-        x_label="instances",
-        y_label="ms",
-        title="Overall runtime",
-    )
-
-    plot(
-        df_docker,
-        f"{directory}/instances_overall-runtime_{dir_df2}.svg",
-        x="instance",
-        y="OVERALL, RunTime(ms)",
-        x_label="instances",
-        y_label="ms",
-        title="Overall runtime",
-    )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="calculate some statistics on the benchmark results")

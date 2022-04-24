@@ -66,26 +66,25 @@ def calculate_stats(directory):
 
 
 def main(directory):
-    dir_df1 = "unikernel"
-    dir_df2 = "docker"
-
-    df_unikernel = None
-    df_docker = None
-
-    path_unikernel = f"{directory}/{dir_df1}"
-    if os.path.isdir(path_unikernel):
-        df_unikernel = calculate_stats(path_unikernel)
-
-    path_docker = f"{directory}/{dir_df2}"
-    if os.path.isdir(path_docker):
-        df_docker = calculate_stats(path_docker)
+    sub_dirs = [
+        "unikernel_allocpool", 
+        "unikernel_base",
+        "unikernel_dce",
+        "unikernel_dce-allocpool",
+        "unikernel_falloc",
+        "unikernel_fbuddyalloc",
+    ]
+    dfs = {}
+    for sub_dir in sub_dirs:
+        path = f"{directory}/{sub_dir}"
+        if os.path.isdir(path):
+            df = calculate_stats(path)
+            dfs[sub_dir] = df
 
     plot.main(
-        df_unikernel=df_unikernel,
-        df_docker=df_docker,
+        dfs=dfs,
         directory=directory,
-        dir_df1=dir_df1,
-        dir_df2=dir_df2
+        sub_dirs=sub_dirs,
     )
 
 
