@@ -46,7 +46,7 @@ def write_df(df, directory, filename, header=False):
 def write_errors(errors, directory, filename):
     with open(f"{directory}/{filename}", 'w') as f:
         f.write(f',"instance_id","count","filenames"\n')
-        for idx, instance_id in enumerate(errors.keys()):
+        for idx, instance_id in enumerate(sorted(errors)):
             f.write(f'{idx},{instance_id},{len(errors[instance_id])},"{errors[instance_id]}"\n')
 
 
@@ -56,6 +56,7 @@ def calculate_stats(directory, sub_dir):
     mean = df.mean()
     median = df.median()
     std = df.std()
+    df = df.sort_values(by='instance').reset_index(drop=True)
 
     write_df(df, f"{directory}/{sub_dir}", "df.csv", True)
     write_df(mean, f"{directory}/{sub_dir}", "mean.csv")
