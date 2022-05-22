@@ -9,8 +9,8 @@ def read_files(path):
     errors = {}
     filenames = os.listdir(path)
     for filename in filenames:
-        if os.path.isfile(os.path.join(path, filename)) and ".txt" in filename:
-            instance_id = filename.rsplit('_',1)[0]
+        if os.path.isfile(os.path.join(path, filename)) and ".txt" in filename and "start_stop.txt" not in filename:
+            instance_id = filename.rsplit('_',2)[0]
             if instance_id not in errors.keys():
                 errors[instance_id] = []
 
@@ -50,23 +50,25 @@ def write_errors(errors, directory, filename):
             f.write(f'{idx},{instance_id},{len(errors[instance_id])},"{errors[instance_id]}"\n')
 
 
-def calculate_stats(directory):
-    df, errors = read_files(directory)
+def calculate_stats(directory, sub_dir):
+    df, errors = read_files(f"{directory}/{sub_dir}")
+    df["source"] = sub_dir
     mean = df.mean()
     median = df.median()
     std = df.std()
 
-    write_df(df, directory, "df.csv", True)
-    write_df(mean, directory, "mean.csv")
-    write_df(median, directory, "median.csv")
-    write_df(std, directory, "std.csv")
-    write_errors(errors, directory, "errors.csv")
+    write_df(df, f"{directory}/{sub_dir}", "df.csv", True)
+    write_df(mean, f"{directory}/{sub_dir}", "mean.csv")
+    write_df(median, f"{directory}/{sub_dir}", "median.csv")
+    write_df(std, f"{directory}/{sub_dir}", "std.csv")
+    write_errors(errors, f"{directory}/{sub_dir}", "errors.csv")
 
     return df
 
 
 def main(directory):
     sub_dirs = [
+        "docker",
         "unikernel_allocpool", 
         "unikernel_base",
         "unikernel_dce",
@@ -76,9 +78,8 @@ def main(directory):
     ]
     dfs = {}
     for sub_dir in sub_dirs:
-        path = f"{directory}/{sub_dir}"
-        if os.path.isdir(path):
-            df = calculate_stats(path)
+        if os.path.isdir(f"{directory}/{sub_dir}"):
+            df = calculate_stats(directory, sub_dir)
             dfs[sub_dir] = df
 
     plot.main(
