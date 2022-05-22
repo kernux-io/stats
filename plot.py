@@ -17,6 +17,8 @@ def plot(df, filename, figsize=(5,5), x="observation", y="value", hue="source", 
     ax.set_xlabel(x_label, fontsize = 8)
     ax.set_ylabel(y_label, fontsize = 8)
     ax.set_title(title, fontsize = 15)
+    if rotation != 0:
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, horizontalalignment='right')
     if labels != []:
         ax.set_xticklabels(labels, rotation=rotation)
     plt.show()
@@ -27,6 +29,7 @@ def plot(df, filename, figsize=(5,5), x="observation", y="value", hue="source", 
 def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
     if directory is not None:
         sub_dirs = [
+            "docker",
             "unikernel_allocpool", 
             "unikernel_base",
             "unikernel_dce",
@@ -42,7 +45,6 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
             df = read_df(path, "df.csv")
             error_df = read_df(path, "errors.csv")
             if df is not None:
-                df["source"] = sub_dir
                 dfs[sub_dir] = df
             if error_df is not None:
                 error_dfs[sub_dir] = error_df
@@ -66,15 +68,15 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
             df_observation = df_observation[["source", "observation", "value"]]
             df = pd.concat([df, df_observation], ignore_index=True)
 
-    #print(f"\nUnikernel errors: {(errors_df1['count'] > 0).value_counts()}\n{errors_df1.loc[errors_df1['count'] > 0]}")
-    #print(f"\nDocker errors: {(errors_df2['count'] > 0).value_counts()}\n{errors_df2.loc[errors_df2['count'] > 0]}")
-    #print(errors_df1.index)
+    instances = int(directory.split('/')[1].split('i_')[0])
+    xdim = 5 if instances <= 5 else instances
+    ydim = 5 if instances <= 5 else 5 + (instances/6)
+    rotation = 0 if instances <= 5 else 45
 
     # Overall runtime (ms)
     df_plot = df.loc[df["observation"] == "OVERALL, RunTime(ms)"]
     plot(
         df_plot,
-        #f"{directory}/overall-runtime_{dir_df1}-{dir_df2}.svg",
         f"{directory}/overall-runtime.svg",
         x_label="",
         y_label="ms",
@@ -86,11 +88,10 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
     df_plot = df.loc[df["observation"] == "OVERALL, Throughput(ops/sec)"]
     plot(
         df_plot,
-        #f"{directory}/overall-throughput_{dir_df1}-{dir_df2}.svg",
         f"{directory}/overall-throughput.svg",
         x_label="",
         y_label="sec",
-        title="Overall throughput",
+        title="Overall throughput (ops/sec)",
         labels=["operations"]
     )
 
@@ -104,12 +105,11 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
     ]
     plot(
         df_plot,
-        #f"{directory}/ops-read_{dir_df1}-{dir_df2}.svg",
         f"{directory}/ops-read.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
-        title="Read operations",
+        title="Read operations (latency)",
         labels=[
             "average latency",
             "min latency",
@@ -129,12 +129,11 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
     ]
     plot(
         df_plot,
-        #f"{directory}/ops-cleanup_{dir_df1}-{dir_df2}.svg",
         f"{directory}/ops-cleanup.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
-        title="Cleaup operations",
+        title="Cleaup operations (latency)",
         labels=[
             "average latency",
             "min latency",
@@ -154,12 +153,11 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
     ]
     plot(
         df_plot,
-        #f"{directory}/ops-insert_{dir_df1}-{dir_df2}.svg",
         f"{directory}/ops-insert.svg",
         figsize=(12,5),
         x_label="",
         y_label="μs",
-        title="Insert operations",
+        title="Insert operations (latency)",
         labels=[
             "average latency",
             "min latency",
@@ -174,24 +172,27 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
             plot(
                 error_dfs[key],
                 f"{directory}/errors_{key}.svg",
-                figsize=(12,5),
+                figsize=(xdim,ydim),
                 x="instance_id",
                 y="count",
                 hue=None,
                 x_label="errors",
                 y_label="count",
                 title=f"Number of errors in {key}",
+                rotation=rotation,
             )
 
     for key in dfs:
         plot(
             dfs[key],
             f"{directory}/instances_overall-runtime_{key}.svg",
+            figsize=(xdim,ydim),
             x="instance",
             y="OVERALL, RunTime(ms)",
             x_label="instances",
             y_label="ms",
             title="Overall runtime",
+            rotation=rotation,
         )
 
 if __name__ == '__main__':
