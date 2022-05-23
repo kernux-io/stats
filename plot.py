@@ -11,12 +11,15 @@ def read_df(directory, filename):
         return pd.read_csv(path_df)
 
 
-def plot(df, filename, figsize=(5,5), x="observation", y="value", hue="source", x_label="", y_label="", title="", labels=[], rotation=0):
+def plot(df, filename, figsize=(5,5), x="observation", y="value", hue="source", x_label="", y_label="", title="", labels=[], rotation=0, legend='best', ymax=None):
     plt.figure(figsize=figsize)
     ax = sns.barplot(x=x, y=y, data=df, ci="sd", capsize=0.05, hue=hue)
     ax.set_xlabel(x_label, fontsize = 8)
     ax.set_ylabel(y_label, fontsize = 8)
     ax.set_title(title, fontsize = 15)
+    ax.legend(loc=legend)
+    if ymax is not None:
+        plt.ylim(0, ymax)
     if rotation != 0:
         ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation, horizontalalignment='right')
     if labels != []:
@@ -71,7 +74,7 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
     instances = int(directory.split('/')[1].split('i_')[0])
     xdim = 5 if instances <= 5 else instances
     ydim = 5 if instances <= 5 else 5 + (instances/6)
-    rotation = 0 if instances <= 5 else 45
+    rotation = 0 if instances < 5 else 45
 
     # Overall runtime (ms)
     df_plot = df.loc[df["observation"] == "OVERALL, RunTime(ms)"]
@@ -80,8 +83,10 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
         f"{directory}/overall-runtime.svg",
         x_label="",
         y_label="ms",
-        title="Overall runtime",
-        labels=["total runtime"]
+        title="Overall Runtime",
+        labels=["artifacts"],
+        legend='lower left',
+        ymax=16000,
     )
     
     # Overall throughput (ops/sec)
@@ -91,8 +96,10 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
         f"{directory}/overall-throughput.svg",
         x_label="",
         y_label="sec",
-        title="Overall throughput (ops/sec)",
-        labels=["operations"]
+        title="Overall Throughput (ops/sec)",
+        labels=["artifacts"],
+        legend='lower left',
+        ymax=125,
     )
 
     # Read (us)
@@ -109,14 +116,15 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
         figsize=(12,5),
         x_label="",
         y_label="μs",
-        title="Read operations (latency)",
+        title="Read Operations (latency)",
         labels=[
             "average latency",
             "min latency",
             "max latency",
             "95th percentile latency",
             "99th percentile latency"
-        ]
+        ],
+        legend='upper left',
     )
     
     # Cleanup (us)
@@ -133,14 +141,15 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
         figsize=(12,5),
         x_label="",
         y_label="μs",
-        title="Cleaup operations (latency)",
+        title="Cleaup Operations (latency)",
         labels=[
             "average latency",
             "min latency",
             "max latency",
             "95th percentile latency",
             "99th percentile latency"
-        ]
+        ],
+        legend='lower left',
     )
 
     # Insert (us)
@@ -157,14 +166,15 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
         figsize=(12,5),
         x_label="",
         y_label="μs",
-        title="Insert operations (latency)",
+        title="Insert Operations (latency)",
         labels=[
             "average latency",
             "min latency",
             "max latency",
             "95th percentile latency",
             "99th percentile latency"
-        ]
+        ],
+        legend='upper left',
     )
 
     for key in error_dfs:
@@ -176,10 +186,12 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
                 x="instance_id",
                 y="count",
                 hue=None,
-                x_label="errors",
+                x_label="instance(s)",
                 y_label="count",
-                title=f"Number of errors in {key}",
+                title=f"Errors in {key}",
                 rotation=rotation,
+                legend='lower left',
+                ymax=1,
             )
 
     for key in dfs:
@@ -189,10 +201,12 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
             figsize=(xdim,ydim),
             x="instance",
             y="OVERALL, RunTime(ms)",
-            x_label="instances",
+            x_label="instance(s)",
             y_label="ms",
-            title="Overall runtime",
+            title="Overall Runtime/Instance",
             rotation=rotation,
+            legend='lower left',
+            ymax=16000,
         )
 
 if __name__ == '__main__':
