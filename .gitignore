@@ -128,6 +128,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-data/**/*.txt
-data/**/*.svg
 .DS_Store

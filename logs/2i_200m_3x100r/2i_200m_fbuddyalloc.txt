@@ -1,0 +1,31 @@
+
+**************************************************************************
+ QEMU:
+   Name:                  a56be64e-7694-49af-91a6-5b0d9d340f1d
+   PID:                   29074
+   Monitor socket:        /run/qemu-guest-29053_monitor.socket
+   Serial socket:         /run/qemu-guest-29053_serial.socket
+   VNC listen:            5900
+
+   SMP configuration:     sockets=1,cores=1,threads=1
+   Memory:                200 MB
+   Kernel:                /home/kernux/Documents/thesis/app-redis/artifacts/redis_kvm-x86_64_fbuddyalloc
+   Parameters:            netdev.ipv4_addr=192.168.1.50 netdev.ipv4_gw_addr=192.168.1.1 netdev.ipv4_subnet_mask=255.255.255.0 -- /redis.conf
+
+**************************************************************************
+Starting VM...
+**************************************************************************
+ QEMU:
+   Name:                  5cc0e1e7-ef75-4fd4-b657-01da6c478c3d
+   PID:                   29172
+   Monitor socket:        /run/qemu-guest-29147_monitor.socket
+   Serial socket:         /run/qemu-guest-29147_serial.socket
+   VNC listen:            5900
+
+   SMP configuration:     sockets=1,cores=1,threads=1
+   Memory:                200 MB
+   Kernel:                /home/kernux/Documents/thesis/app-redis/artifacts/redis_kvm-x86_64_fbuddyalloc
+   Parameters:            netdev.ipv4_addr=192.168.1.51 netdev.ipv4_gw_addr=192.168.1.1 netdev.ipv4_subnet_mask=255.255.255.0 -- /redis.conf
+
+**************************************************************************
+Starting VM...

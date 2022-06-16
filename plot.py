@@ -71,7 +71,9 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
             df_observation = df_observation[["source", "observation", "value"]]
             df = pd.concat([df, df_observation], ignore_index=True)
 
-    instances = int(directory.split('/')[1].split('i_')[0])
+    dir_split = directory.split('/')[1].split('_')
+    memory = dir_split[1]
+    instances = int(dir_split[0].replace('i', ''))
     xdim = 5 if instances <= 5 else instances
     ydim = 5 if instances <= 5 else 5 + (instances/6)
     rotation = 0 if instances < 5 else 45
@@ -93,10 +95,10 @@ def main(dfs=None, directory=None, sub_dirs=None, error_dfs=None):
     df_plot = df.loc[df["observation"] == "OVERALL, Throughput(ops/sec)"]
     plot(
         df_plot,
-        f"{directory}/overall-throughput.svg",
+        f"{directory}/overall-throughput_{instances}i{memory}.svg",
         x_label="",
-        y_label="sec",
-        title="Overall Throughput (ops/sec)",
+        y_label="ops/sec",
+        #title="Overall Throughput (ops/sec)",
         labels=["artifacts"],
         legend='lower left',
         ymax=125,
